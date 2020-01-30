@@ -5,7 +5,7 @@ MAINTAINER KiwenLau <kiwenlau@gmail.com>
 WORKDIR /root
 
 # install openssh-server, openjdk and wget
-RUN apt-get update && apt-get install -y openssh-server openjdk-7-jdk wget
+RUN apt-get update && apt-get install -y openssh-server openjdk-7-jdk wget curl
 
 # install hadoop 2.7.2
 RUN wget https://github.com/kiwenlau/compile-hadoop/releases/download/2.7.2/hadoop-2.7.2.tar.gz && \
@@ -46,5 +46,9 @@ RUN chmod +x ~/start-hadoop.sh && \
 # format namenode
 RUN /usr/local/hadoop/bin/hdfs namenode -format
 
-CMD [ "sh", "-c", "service ssh start; bash"]
+# EXPOSE 50070 22
+
+HEALTHCHECK --interval=1s --timeout=3s --start-period=2s --retries=3 CMD [ "curl", "localhost:50070" ]
+
+CMD ["sh", \"-c", "echo -e '\n127.0.0.1\thadoop-master' >> /etc/hosts && echo > /usr/local/hadoop/etc/hadoop/slaves && service ssh start && ./start-hadoop.sh && /usr/local/hadoop/sbin/hadoop-daemon.sh start datanode && sleep infinity"]
 
